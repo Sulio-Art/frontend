@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { authApi, setAuthToken } from '@/lib/api';
+import { authApi } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -36,8 +36,7 @@ export default function LoginPage() {
       setIsLoading(true);
       setError('');
       const response = await authApi.login(data);
-      setAuthToken(response.token);
-      
+
       // Redirect to the original requested page or dashboard
       const from = searchParams.get('from') || '/dashboard';
       router.push(from);
