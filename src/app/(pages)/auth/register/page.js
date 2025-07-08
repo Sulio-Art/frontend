@@ -346,7 +346,6 @@ export default function RegisterPage() {
     console.log(data);
     setIsLoading(true);
     setError('');
-
     const response = axios.post('http://localhost:5000/api/auth/register', data);
     setRegisteredEmail(data.email);
     setShowOtpForm(true);
@@ -358,15 +357,14 @@ export default function RegisterPage() {
   }
 };
 
-
   const onOtpSubmit =(data) => {
     try {
       setIsLoading(true);
       setError('');
       
     const response = axios.post('http://localhost:5000/api/auth/verify', data);
-      // await verifyOtp({ email: registeredEmail, otp: data.otp }).unwrap();
-      // router.replace('/auth/login?verified=true');
+      verifyOtp({ email: registeredEmail, otp: data.otp }).unwrap();
+      router.replace('/auth/login?verified=true');
     } catch (err) {
       setError(err?.data?.message || 'OTP verification failed');
     } finally {

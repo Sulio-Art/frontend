@@ -25,11 +25,8 @@ const verifyToken = async (token) => {
 
 // This function is async
 export async function middleware(request) {
-  console.log('\n[Middleware] ================== New Request ==================');
-  console.log('[Middleware] Request URL:', request.url);
   
   const { pathname } = request.nextUrl;
-  console.log('[Middleware] Pathname:', pathname);
 
   // Public paths that don't require authentication
   const publicPaths = [

@@ -39,51 +39,51 @@ const artworks = [
     price: 120,
     image: "/images/artwork1.jpg",
     date: "Jun 10, 2023"
-  },
-  {
-    id: 2,
-    title: "Sunset Mountains",
-    category: "Illustrations",
-    status: "Published",
-    price: 150,
-    image: "/images/artwork2.jpg",
-    date: "May 28, 2023"
-  },
-  {
-    id: 3,
-    title: "Digital Portrait",
-    category: "Portraits",
-    status: "Draft",
-    price: 200,
-    image: "/images/artwork3.jpg",
-    date: "Jun 5, 2023"
-  },
-  {
-    id: 4,
-    title: "Neon City",
-    category: "Digital Art",
-    status: "Published",
-    price: 95,
-    image: "/images/artwork4.jpg",
-    date: "Jun 2, 2023"
-  },
-  {
-    id: 5,
-    title: "Watercolor Landscape",
-    category: "Illustrations",
-    status: "Draft",
-    price: 180,
-    image: "/images/artwork5.jpg",
-    date: "May 20, 2023"
-  },
-  {
-    id: 6,
-    title: "Abstract Patterns",
-    category: "Abstract",
-    status: "Published",
-    price: 110,
-    image: "/images/artwork6.jpg",
-    date: "Jun 8, 2023"
+  // },
+  // {
+  //   id: 2,
+  //   title: "Sunset Mountains",
+  //   category: "Illustrations",
+  //   status: "Published",
+  //   price: 150,
+  //   image: "/images/artwork2.jpg",
+  //   date: "May 28, 2023"
+  // },
+  // {
+  //   id: 3,
+  //   title: "Digital Portrait",
+  //   category: "Portraits",
+  //   status: "Draft",
+  //   price: 200,
+  //   image: "/images/artwork3.jpg",
+  //   date: "Jun 5, 2023"
+  // },
+  // {
+  //   id: 4,
+  //   title: "Neon City",
+  //   category: "Digital Art",
+  //   status: "Published",
+  //   price: 95,
+  //   image: "/images/artwork4.jpg",
+  //   date: "Jun 2, 2023"
+  // },
+  // {
+  //   id: 5,
+  //   title: "Watercolor Landscape",
+  //   category: "Illustrations",
+  //   status: "Draft",
+  //   price: 180,
+  //   image: "/images/artwork5.jpg",
+  //   date: "May 20, 2023"
+  // },
+  // {
+  //   id: 6,
+  //   title: "Abstract Patterns",
+  //   category: "Abstract",
+  //   status: "Published",
+  //   price: 110,
+  //   image: "/images/artwork6.jpg",
+  //   date: "Jun 8, 2023"
   }
 ]
 
@@ -165,7 +165,7 @@ export default function ArtworkPage() {
             {filteredArtworks.map((artwork) => (
               <Card key={artwork.id} className="overflow-hidden border-none shadow-sm">
                 <div className="relative aspect-square">
-                  <Image
+                  {/* <Image
                     src={artwork.image}
                     alt={artwork.title}
                     fill
@@ -174,7 +174,7 @@ export default function ArtworkPage() {
                     onError={(e) => {
                       e.currentTarget.src = "https://via.placeholder.com/400x400?text=Artwork";
                     }}
-                  />
+                  /> */}
                   <div className="absolute top-2 right-2">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

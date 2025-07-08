@@ -54,7 +54,7 @@ export function TopCustomers() {
               className="flex items-center space-x-3 border-b border-gray-100 pb-4 last:border-0 last:pb-0"
             >
               <div className="relative w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
-                <Image
+                {/* <Image
                   src={customer.avatar}
                   alt={customer.name}
                   fill
@@ -64,7 +64,7 @@ export function TopCustomers() {
                   onError={(e) => {
                     e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(customer.name)}&background=random`;
                   }}
-                />
+                /> */}
               </div>
               
               <div className="flex-1 min-w-0">

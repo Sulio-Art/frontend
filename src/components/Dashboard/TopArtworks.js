@@ -8,7 +8,7 @@ const topArtworks = [
   {
     id: 1,
     title: "Abstract Dreams",
-    image: "/images/artwork1.jpg",
+    // image: "/images/artwork1.jpg",
     views: 1240,
     likes: 342,
     sales: 24,
@@ -17,7 +17,7 @@ const topArtworks = [
   {
     id: 2,
     title: "Sunset Mountains",
-    image: "/images/artwork2.jpg",
+    // image: "/images/artwork2.jpg",
     views: 980,
     likes: 256,
     sales: 18,
@@ -26,7 +26,7 @@ const topArtworks = [
   {
     id: 3,
     title: "Digital Portrait",
-    image: "/images/artwork3.jpg",
+    // image: "/images/artwork3.jpg",
     views: 1450,
     likes: 412,
     sales: 32,
@@ -35,7 +35,7 @@ const topArtworks = [
   {
     id: 4,
     title: "Neon City",
-    image: "/images/artwork4.jpg",
+    // image: "/images/artwork4.jpg",
     views: 890,
     likes: 198,
     sales: 15,
@@ -58,7 +58,7 @@ export function TopArtworks() {
             >
               <div className="relative w-16 h-16 flex-shrink-0">
                 <div className="absolute inset-0 rounded-md overflow-hidden">
-                  <Image 
+                  {/* <Image 
                     src={artwork.image} 
                     alt={artwork.title}
                     fill
@@ -68,7 +68,7 @@ export function TopArtworks() {
                     onError={(e) => {
                       e.currentTarget.src = "https://via.placeholder.com/64x64?text=Art";
                     }}
-                  />
+                  /> */}
                 </div>
               </div>
               

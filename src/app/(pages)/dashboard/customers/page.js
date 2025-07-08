@@ -245,7 +245,7 @@ export default function CustomersPage() {
                       <div className="p-4 flex justify-between items-start">
                         <div className="flex items-center">
                           <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 mr-3">
-                            <Image
+                            {/* <Image
                               src={customer.avatar}
                               alt={customer.name}
                               fill
@@ -254,7 +254,7 @@ export default function CustomersPage() {
                               onError={(e) => {
                                 e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(customer.name)}&background=random`;
                               }}
-                            />
+                            /> */}
                           </div>
                           
                           <div>

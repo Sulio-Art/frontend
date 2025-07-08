@@ -25,11 +25,14 @@ export default function VerifyPage() {
     setSuccess(false);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || ""}/api/auth/verify`,
+        `http://localhost:5000/api/auth/verify`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
+          body: JSON.stringify({
+        email: email,
+        otp: otp      
+      }),
         }
       );
       const result = await res.json();

@@ -11,6 +11,18 @@ import { MonthlySales } from "@/components/Dashboard/MonthlySales"
 import { TopCustomers } from "@/components/Dashboard/TopCustomers"
 
 export default function DashboardPage() {
+
+  const handleLogout = async () => {
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/logout`, {
+        method: 'POST',
+      });
+      // Redirect to login page after logout
+      router.push('/auth/login');
+    } catch (err) {
+      console.error('Failed to log out', err);
+    }
+  };
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
