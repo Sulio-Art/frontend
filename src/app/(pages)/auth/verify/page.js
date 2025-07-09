@@ -29,10 +29,7 @@ export default function VerifyPage() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-        email: email,
-        otp: otp      
-      }),
+          body: JSON.stringify(data),
         }
       );
       const result = await res.json();
