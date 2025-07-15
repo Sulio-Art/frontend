@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { jwtVerify } from 'jose';
 
-// This helper function is async
+
 const verifyToken = async (token) => {
   if (!token) {
     console.log('[Middleware] No token provided');
@@ -23,12 +23,23 @@ const verifyToken = async (token) => {
   }
 };
 
-// This function is async
+
 export async function middleware(request) {
   
   const { pathname } = request.nextUrl;
 
-  // Public paths that don't require authentication
+   const isJustLoggedIn = request.cookies.get('isJustLoggedIn')?.value === 'true';
+
+ 
+  if (pathname.startsWith('/dashboard') && isJustLoggedIn) {
+    console.log('[Middleware] Detected "isJustLoggedIn" flag, allowing access and clearing flag.');
+    const response = NextResponse.next();
+    
+    response.cookies.set('isJustLoggedIn', '', { maxAge: -1 }); 
+    return response;
+  }
+
+ 
   const publicPaths = [
     '/auth/login',
     '/auth/register',
@@ -69,7 +80,7 @@ export async function middleware(request) {
     }
   });
 
-  // Always redirect to login if trying to access dashboard without a valid token
+ 
   if (isDashboardPath && !verifiedToken) {
     console.log('[Middleware] Unauthorized dashboard access, redirecting to login');
     const loginUrl = new URL('/auth/login', request.url);

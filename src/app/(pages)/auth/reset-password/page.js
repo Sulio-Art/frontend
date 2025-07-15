@@ -1,49 +1,55 @@
 "use client";
+
+
+import { useResetPasswordMutation } from '@/lib/api/authApi';
 import { useForm } from "react-hook-form";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from 'next/link';
 
 export default function ResetPasswordPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
     setValue,
     watch,
-  } = useForm();
-  const [serverError, setServerError] = useState("");
-  const [success, setSuccess] = useState(false);
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const emailFromQuery = searchParams.get("email") || "";
+  } = useForm({
+      mode: 'onBlur',
+  });
+
+  const [resetPassword, { isLoading, isSuccess, error }] = useResetPasswordMutation();
 
   useEffect(() => {
-    if (emailFromQuery) setValue("email", emailFromQuery);
-  }, [emailFromQuery, setValue]);
-
+    const emailFromQuery = searchParams.get("email");
+    if (emailFromQuery) {
+      setValue("email", emailFromQuery);
+    }
+  }, [searchParams, setValue]);
+ 
   async function onSubmit(data) {
-    setServerError("");
-    setSuccess(false);
+   
+    const { confirmPassword, ...submissionData } = data;
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || ""}/api/auth/reset-password`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        }
-      );
-      const result = await res.json();
-      if (!res.ok) {
-        setServerError(result.error || result.message || "Reset failed.");
-        return;
-      }
-      setSuccess(true);
-      setTimeout(() => router.push("/auth/login"), 2000);
+      await resetPassword(submissionData).unwrap();
     } catch (err) {
-      setServerError("Network error. Please try again.");
+      console.error("Failed to reset password:", err);
     }
   }
+
+  useEffect(() => {
+    if (isSuccess) {
+      setTimeout(() => {
+        router.push("/auth/login?reset=success");
+      }, 2500); 
+    }
+  }, [isSuccess, router]);
+
+
+  const errorMessage = error?.data?.message || 'Network error. Please try again.';
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -53,124 +59,76 @@ export default function ResetPasswordPage() {
         </h2>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Email</label>
             <input
               type="email"
-              {...register("email", {
-                required: "Email is required",
-                pattern: {
-                  value: /^\S+@\S+\.\S+$/,
-                  message: "Invalid email address",
-                },
-              })}
-              defaultValue={emailFromQuery}
-              className={`mt-1 w-full rounded border px-3 py-2 ${
-                errors.email ? "border-red-500" : "border-gray-300"
-              }`}
-              autoComplete="email"
-              readOnly={!!emailFromQuery}
+              {...register("email")}
+              className="mt-1 w-full rounded border bg-gray-100 px-3 py-2"
+              readOnly 
             />
-            {errors.email && (
-              <span className="text-xs text-red-600">
-                {errors.email.message}
-              </span>
-            )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              OTP
-            </label>
+            <label className="block text-sm font-medium text-gray-700">OTP</label>
             <input
               type="text"
-              {...register("otp", {
-                required: "OTP is required",
-                pattern: {
-                  value: /^[0-9]{4,8}$/,
-                  message: "Invalid OTP format",
-                },
-              })}
-              className={`mt-1 w-full rounded border px-3 py-2 ${
-                errors.otp ? "border-red-500" : "border-gray-300"
-              }`}
+              {...register("otp", { required: "OTP is required" })}
+              className={`mt-1 w-full rounded border px-3 py-2 ${errors.otp ? "border-red-500" : "border-gray-300"}`}
               autoComplete="one-time-code"
               inputMode="numeric"
+              disabled={isLoading || isSuccess}
             />
-            {errors.otp && (
-              <span className="text-xs text-red-600">
-                {errors.otp.message}
-              </span>
-            )}
+            {errors.otp && <span className="text-xs text-red-600">{errors.otp.message}</span>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              New Password
-            </label>
+            <label className="block text-sm font-medium text-gray-700">New Password</label>
             <input
               type="password"
               {...register("newPassword", {
                 required: "New password is required",
-                minLength: {
-                  value: 6,
-                  message: "Password must be at least 6 characters",
-                },
+                minLength: { value: 6, message: "Password must be at least 6 characters" },
               })}
-              className={`mt-1 w-full rounded border px-3 py-2 ${
-                errors.newPassword ? "border-red-500" : "border-gray-300"
-              }`}
+              className={`mt-1 w-full rounded border px-3 py-2 ${errors.newPassword ? "border-red-500" : "border-gray-300"}`}
               autoComplete="new-password"
+              disabled={isLoading || isSuccess}
             />
-            {errors.newPassword && (
-              <span className="text-xs text-red-600">
-                {errors.newPassword.message}
-              </span>
-            )}
+            {errors.newPassword && <span className="text-xs text-red-600">{errors.newPassword.message}</span>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Confirm New Password
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Confirm New Password</label>
             <input
               type="password"
               {...register("confirmPassword", {
                 required: "Please confirm your new password",
-                validate: (value) =>
-                  value === watch("newPassword") || "Passwords do not match",
+                validate: (value) => value === watch("newPassword") || "Passwords do not match",
               })}
-              className={`mt-1 w-full rounded border px-3 py-2 ${
-                errors.confirmPassword ? "border-red-500" : "border-gray-300"
-              }`}
+              className={`mt-1 w-full rounded border px-3 py-2 ${errors.confirmPassword ? "border-red-500" : "border-gray-300"}`}
               autoComplete="new-password"
+              disabled={isLoading || isSuccess}
             />
-            {errors.confirmPassword && (
-              <span className="text-xs text-red-600">
-                {errors.confirmPassword.message}
-              </span>
-            )}
+            {errors.confirmPassword && <span className="text-xs text-red-600">{errors.confirmPassword.message}</span>}
           </div>
-          {serverError && (
-            <div className="rounded bg-red-100 px-3 py-2 text-sm text-red-700">
-              {serverError}
-            </div>
+          
+          {error && (
+            <div className="rounded bg-red-100 px-3 py-2 text-sm text-red-700">{errorMessage}</div>
           )}
-          {success && (
+          {isSuccess && (
             <div className="rounded bg-green-100 px-3 py-2 text-sm text-green-700">
               Password reset successful! Redirecting to login...
             </div>
           )}
+          
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isLoading || isSuccess}
             className="w-full rounded bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {isSubmitting ? "Resetting..." : "Reset Password"}
+            {isLoading ? "Resetting..." : "Reset Password"}
           </button>
         </form>
         <div className="mt-4 text-center text-sm text-gray-600">
-          <a href="/auth/login" className="text-blue-600 hover:underline">
+          <Link href="/auth/login" className="text-blue-600 hover:underline">
             Back to Login
-          </a>
+          </Link>
         </div>
       </div>
     </div>

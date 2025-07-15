@@ -1,460 +1,354 @@
-"use client"
+// src/app/(pages)/dashboard/settings/page.js
 
-import { useState } from "react"
-import { Sidebar } from "@/components/Dashboard/Sidebar"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
+"use client";
+
+import { useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Toaster, toast } from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+
+// RTK Query Hooks
 import {
-  User,
-  Lock,
-  Bell,
-  CreditCard,
-  Globe,
-  Share2,
-  Palette,
-  Save
-} from "lucide-react"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+  useGetSettingsQuery,
+  useUpdateSettingsMutation,
+} from "@/lib/api/settingsApi";
+// import { useUpdatePasswordMutation } from "@/lib/api/authApi";
+
+// UI Components
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { User, Lock, Bell, CreditCard, Palette, Save } from "lucide-react";
+
+// Validation schema for the password form
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required."),
+  newPassword: z.string().min(6, "New password must be at least 6 characters."),
+});
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState("account")
-  
+  const router = useRouter();
+  const { user } = useSelector((state) => state.auth);
+  const { data: settingsData, isLoading: isLoadingSettings } =
+    useGetSettingsQuery(undefined, {
+      skip: !user, // Skip query until user is loaded
+    });
+
+  const [updateSettings, { isLoading: isUpdatingSettings }] =
+    useUpdateSettingsMutation();
+  // const [updatePassword, { isLoading: isUpdatingPassword }] =
+  //   useUpdatePasswordMutation();
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(passwordSchema),
+    // Set default values to prevent uncontrolled-to-controlled errors
+    defaultValues: {
+      fullName: "",
+      email: "",
+      currentPassword: "",
+      newPassword: "",
+      notificationsEnabled: true,
+      theme: "light",
+    },
+  });
+
+  // This effect runs when the user or settings data is loaded/changed,
+  // and it populates the form with the correct data.
+  useEffect(() => {
+    if (user) {
+      reset({
+        fullName: `${user.firstName || ""} ${user.lastName || ""}`,
+        email: user.email || "",
+        notificationsEnabled: settingsData?.notificationsEnabled ?? true,
+        theme: settingsData?.theme || "light",
+      });
+    }
+  }, [user, settingsData, reset]);
+
+  const onSaveSecurity = async (data) => {
+    const toastId = toast.loading("Updating password...");
+    try {
+      await updatePassword({
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      }).unwrap();
+      toast.success("Password updated successfully!", { id: toastId });
+      // Reset only the password fields
+      reset((currentValues) => ({
+        ...currentValues,
+        currentPassword: "",
+        newPassword: "",
+      }));
+    } catch (err) {
+      toast.error(err.data?.message || "Failed to update password.", {
+        id: toastId,
+      });
+    }
+  };
+
+  const onSaveNotifications = async (data) => {
+    try {
+      await updateSettings({
+        notificationsEnabled: data.notificationsEnabled,
+      }).unwrap();
+      toast.success("Notification settings saved!");
+    } catch (err) {
+      toast.error(err.data?.message || "Failed to save settings.");
+    }
+  };
+
+  const onSaveAppearance = async (data) => {
+    try {
+      await updateSettings({ theme: data.theme }).unwrap();
+      toast.success("Appearance settings saved!");
+    } catch (err) {
+      toast.error(err.data?.message || "Failed to save settings.");
+    }
+  };
+
+  if (isLoadingSettings) return <div>Loading settings...</div>;
+
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar />
-      <main className="flex-1 p-6 overflow-auto">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-6">
-            <h1 className="text-2xl md:text-3xl font-semibold text-gray-900">Settings</h1>
-            <p className="text-gray-600 mt-1">Manage your account settings and preferences</p>
+    <>
+      <Toaster position="top-center" />
+      <div className="mb-6">
+        <h1 className="text-3xl font-semibold">Settings</h1>
+        <p className="text-gray-600 mt-1">
+          Manage your account settings and preferences
+        </p>
+      </div>
+
+      <Card className="border-none shadow-sm overflow-hidden">
+        <Tabs defaultValue="account" className="w-full">
+          <div className="border-b px-4">
+            <TabsList className="bg-transparent p-0 h-auto inline-flex">
+              <TabsTrigger
+                value="account"
+                className="inline-flex items-center justify-center rounded-none px-3 py-1.5 text-sm font-medium ring-offset-background transition-all data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:text-purple-700 outline-none data-[state=active]:shadow-none bg-transparent"
+              >
+                <User className="h-4 w-4 mr-2" />
+                Account
+              </TabsTrigger>
+              <TabsTrigger
+                value="security"
+                className="inline-flex items-center justify-center rounded-none px-3 py-1.5 text-sm font-medium ring-offset-background transition-all data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:text-purple-700 outline-none data-[state=active]:shadow-none bg-transparent"
+              >
+                <Lock className="h-4 w-4 mr-2" />
+                Security
+              </TabsTrigger>
+              <TabsTrigger
+                value="notifications"
+                className="inline-flex items-center justify-center rounded-none px-3 py-1.5 text-sm font-medium ring-offset-background transition-all data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:text-purple-700 outline-none data-[state=active]:shadow-none bg-transparent"
+              >
+                <Bell className="h-4 w-4 mr-2" />
+                Notifications
+              </TabsTrigger>
+              <TabsTrigger
+                value="billing"
+                className="inline-flex items-center justify-center rounded-none px-3 py-1.5 text-sm font-medium ring-offset-background transition-all data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:text-purple-700 outline-none data-[state=active]:shadow-none bg-transparent"
+              >
+                <CreditCard className="h-4 w-4 mr-2" />
+                Billing
+              </TabsTrigger>
+              <TabsTrigger
+                value="appearance"
+                className="inline-flex items-center justify-center rounded-none px-3 py-1.5 text-sm font-medium ring-offset-background transition-all data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:text-purple-700 outline-none data-[state=active]:shadow-none bg-transparent"
+              >
+                <Palette className="h-4 w-4 mr-2" />
+                Appearance
+              </TabsTrigger>
+            </TabsList>
           </div>
-          
-          <Card className="border-none shadow-sm overflow-hidden">
-            <Tabs defaultValue="account" className="w-full" onValueChange={setActiveTab}>
-              <div className="border-b">
-                <div className="px-4">
-                  <TabsList className="inline-flex h-10 items-center justify-center rounded-none p-0 w-auto">
-                    <TabsTrigger 
-                      value="account" 
-                      className="inline-flex items-center justify-center rounded-none px-3 py-1.5 text-sm font-medium ring-offset-background transition-all data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:text-purple-700 outline-none data-[state=active]:shadow-none"
-                    >
-                      <User className="h-4 w-4 mr-2" />
-                      Account
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="security" 
-                      className="inline-flex items-center justify-center rounded-none px-3 py-1.5 text-sm font-medium ring-offset-background transition-all data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:text-purple-700 outline-none data-[state=active]:shadow-none"
-                    >
-                      <Lock className="h-4 w-4 mr-2" />
-                      Security
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="notifications" 
-                      className="inline-flex items-center justify-center rounded-none px-3 py-1.5 text-sm font-medium ring-offset-background transition-all data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:text-purple-700 outline-none data-[state=active]:shadow-none"
-                    >
-                      <Bell className="h-4 w-4 mr-2" />
-                      Notifications
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="billing" 
-                      className="inline-flex items-center justify-center rounded-none px-3 py-1.5 text-sm font-medium ring-offset-background transition-all data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:text-purple-700 outline-none data-[state=active]:shadow-none"
-                    >
-                      <CreditCard className="h-4 w-4 mr-2" />
-                      Billing
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="appearance" 
-                      className="inline-flex items-center justify-center rounded-none px-3 py-1.5 text-sm font-medium ring-offset-background transition-all data-[state=active]:border-b-2 data-[state=active]:border-purple-600 data-[state=active]:text-purple-700 outline-none data-[state=active]:shadow-none"
-                    >
-                      <Palette className="h-4 w-4 mr-2" />
-                      Appearance
-                    </TabsTrigger>
-                  </TabsList>
+
+          <TabsContent value="account" className="p-6">
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-medium">Profile Information</h3>
+                <p className="text-sm text-gray-500">
+                  This info is linked to your public profile.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label>Full Name</Label>
+                  <Input
+                    {...register("fullName")}
+                    readOnly
+                    className="bg-gray-100 cursor-not-allowed"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email Address</Label>
+                  <Input
+                    type="email"
+                    {...register("email")}
+                    readOnly
+                    className="bg-gray-100 cursor-not-allowed"
+                  />
                 </div>
               </div>
-              
-              <TabsContent value="account" className="p-6">
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-medium">Profile Information</h3>
-                    <p className="text-sm text-gray-500">Update your account profile information</p>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Full Name</Label>
-                      <Input id="name" defaultValue="Sarah Johnson" />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email Address</Label>
-                      <Input id="email" type="email" defaultValue="sarah.j@example.com" />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="username">Username</Label>
-                      <Input id="username" defaultValue="sarahart" />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number</Label>
-                      <Input id="phone" type="tel" defaultValue="+1 (555) 987-6543" />
-                    </div>
-                    
-                    <div className="col-span-1 md:col-span-2 space-y-2">
-                      <Label htmlFor="bio">Bio</Label>
-                      <Textarea 
-                        id="bio" 
-                        placeholder="Write a short bio..." 
-                        className="min-h-[100px]"
-                        defaultValue="Digital artist specializing in abstract and portrait art using various digital techniques."
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium">Public Profile</h3>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Profile Visibility</Label>
-                        <p className="text-sm text-gray-500">
-                          Control whether your profile is public or private
-                        </p>
-                      </div>
-                      <Switch defaultChecked={true} />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base">Show Email Address</Label>
-                        <p className="text-sm text-gray-500">
-                          Allow others to see your email address
-                        </p>
-                      </div>
-                      <Switch defaultChecked={false} />
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-end">
-                    <Button className="bg-purple-600 hover:bg-purple-700 gap-2">
-                      <Save className="h-4 w-4" />
-                      Save Changes
-                    </Button>
-                  </div>
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  onClick={() => router.push("/dashboard/profile/edit")}
+                >
+                  Edit Profile
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="security" className="p-6">
+            <form onSubmit={handleSubmit(onSaveSecurity)} className="space-y-6">
+              <div>
+                <h3 className="text-lg font-medium">Change Password</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="currentPassword">Current Password</Label>
+                  <Input
+                    id="currentPassword"
+                    type="password"
+                    {...register("currentPassword")}
+                  />
+                  {errors.currentPassword && (
+                    <p className="text-sm text-red-500">
+                      {errors.currentPassword.message}
+                    </p>
+                  )}
                 </div>
-              </TabsContent>
-              
-              <TabsContent value="security" className="p-6">
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-medium">Security Settings</h3>
-                    <p className="text-sm text-gray-500">Manage your account security preferences</p>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="current-password">Current Password</Label>
-                        <Input id="current-password" type="password" />
-                      </div>
-                      
-                      <div className="col-span-1 md:col-span-2 space-y-2">
-                        <p className="text-sm text-gray-500">Leave the fields below empty if you don&apos;t want to change your password</p>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="new-password">New Password</Label>
-                        <Input id="new-password" type="password" />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="confirm-password">Confirm New Password</Label>
-                        <Input id="confirm-password" type="password" />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-4 pt-4 border-t">
-                      <h4 className="text-base font-medium">Two-Factor Authentication</h4>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label className="text-base">Enable 2FA</Label>
-                          <p className="text-sm text-gray-500">
-                            Add an extra layer of security to your account
-                          </p>
-                        </div>
-                        <Switch defaultChecked={false} />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-4 pt-4 border-t">
-                      <h4 className="text-base font-medium">Account Sessions</h4>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label className="text-base">Current Session</Label>
-                          <p className="text-sm text-gray-500">
-                            Chrome on Windows • Active now
-                          </p>
-                        </div>
-                        <Button variant="outline" size="sm">Sign Out</Button>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-end">
-                    <Button className="bg-purple-600 hover:bg-purple-700 gap-2">
-                      <Save className="h-4 w-4" />
-                      Save Changes
-                    </Button>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    {...register("newPassword")}
+                  />
+                  {errors.newPassword && (
+                    <p className="text-sm text-red-500">
+                      {errors.newPassword.message}
+                    </p>
+                  )}
                 </div>
-              </TabsContent>
-              
-              <TabsContent value="notifications" className="p-6">
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-medium">Notification Preferences</h3>
-                    <p className="text-sm text-gray-500">Choose how and when you want to be notified</p>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <h4 className="text-base font-medium">Email Notifications</h4>
-                    
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label className="text-base">New Sales</Label>
-                          <p className="text-sm text-gray-500">
-                            Receive notifications when your artwork sells
-                          </p>
-                        </div>
-                        <Switch defaultChecked={true} />
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label className="text-base">New Comments</Label>
-                          <p className="text-sm text-gray-500">
-                            Receive notifications when someone comments on your artwork
-                          </p>
-                        </div>
-                        <Switch defaultChecked={true} />
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label className="text-base">New Followers</Label>
-                          <p className="text-sm text-gray-500">
-                            Receive notifications when someone follows you
-                          </p>
-                        </div>
-                        <Switch defaultChecked={true} />
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label className="text-base">Marketing Emails</Label>
-                          <p className="text-sm text-gray-500">
-                            Receive promotional emails and newsletters
-                          </p>
-                        </div>
-                        <Switch defaultChecked={false} />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4 pt-4 border-t">
-                    <h4 className="text-base font-medium">Push Notifications</h4>
-                    
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label className="text-base">Enable Push Notifications</Label>
-                          <p className="text-sm text-gray-500">
-                            Receive notifications on your device
-                          </p>
-                        </div>
-                        <Switch defaultChecked={true} />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-end">
-                    <Button className="bg-purple-600 hover:bg-purple-700 gap-2">
-                      <Save className="h-4 w-4" />
-                      Save Changes
-                    </Button>
-                  </div>
+              </div>
+              <div className="flex justify-end">
+                {/* <Button
+                  type="submit"
+                  disabled={isUpdatingPassword}
+                  className="bg-purple-600 hover:bg-purple-700 gap-2"
+                >
+                  <Save className="h-4 w-4" />
+                  {isUpdatingPassword ? "Saving..." : "Save Security"}
+                </Button> */}
+              </div>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="notifications" className="p-6">
+            <form
+              onSubmit={handleSubmit(onSaveNotifications)}
+              className="space-y-6"
+            >
+              <div>
+                <h3 className="text-lg font-medium">
+                  Notification Preferences
+                </h3>
+              </div>
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <Label htmlFor="notificationsEnabled" className="font-medium">
+                    Enable Email Notifications
+                  </Label>
+                  <p className="text-sm text-gray-500">
+                    Receive notifications for sales, comments, etc.
+                  </p>
                 </div>
-              </TabsContent>
-              
-              <TabsContent value="billing" className="p-6">
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-medium">Billing Settings</h3>
-                    <p className="text-sm text-gray-500">Manage your payment methods and billing preferences</p>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <h4 className="text-base font-medium">Payment Methods</h4>
-                    
-                    <Card>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <CreditCard className="h-8 w-8 text-gray-400" />
-                            <div>
-                              <p className="font-medium">Visa ending in 4242</p>
-                              <p className="text-sm text-gray-500">Expires 04/25</p>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm">Edit</Button>
-                            <Button variant="outline" size="sm" className="text-red-600">Remove</Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    
-                    <Button variant="outline" className="gap-2">
-                      <CreditCard className="h-4 w-4" />
-                      Add Payment Method
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-4 pt-4 border-t">
-                    <h4 className="text-base font-medium">Billing Information</h4>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="billing-name">Name</Label>
-                        <Input id="billing-name" defaultValue="Sarah Johnson" />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="billing-email">Email</Label>
-                        <Input id="billing-email" type="email" defaultValue="sarah.j@example.com" />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="billing-address">Address</Label>
-                        <Input id="billing-address" defaultValue="123 Art St" />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="billing-city">City</Label>
-                        <Input id="billing-city" defaultValue="New York" />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="billing-state">State/Province</Label>
-                        <Input id="billing-state" defaultValue="NY" />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="billing-zipcode">ZIP/Postal Code</Label>
-                        <Input id="billing-zipcode" defaultValue="10001" />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="billing-country">Country</Label>
-                        <Select defaultValue="us">
-                          <SelectTrigger id="billing-country">
-                            <SelectValue placeholder="Select a country" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="us">United States</SelectItem>
-                            <SelectItem value="ca">Canada</SelectItem>
-                            <SelectItem value="uk">United Kingdom</SelectItem>
-                            <SelectItem value="au">Australia</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-end">
-                    <Button className="bg-purple-600 hover:bg-purple-700 gap-2">
-                      <Save className="h-4 w-4" />
-                      Save Changes
-                    </Button>
-                  </div>
+                <Controller
+                  name="notificationsEnabled"
+                  control={control}
+                  render={({ field }) => (
+                    <Switch
+                      id="notificationsEnabled"
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  )}
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  type="submit"
+                  disabled={isUpdatingSettings}
+                  className="bg-purple-600 hover:bg-purple-700 gap-2"
+                >
+                  <Save className="h-4 w-4" />
+                  {isUpdatingSettings ? "Saving..." : "Save Notifications"}
+                </Button>
+              </div>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="billing" className="p-6">
+            <div className="text-center text-gray-500 py-8">
+              Billing management and subscription details coming soon!
+            </div>
+          </TabsContent>
+
+          <TabsContent value="appearance" className="p-6">
+            <form
+              onSubmit={handleSubmit(onSaveAppearance)}
+              className="space-y-6"
+            >
+              <div>
+                <h3 className="text-lg font-medium">Appearance</h3>
+              </div>
+              <div className="space-y-4 p-4 border rounded-lg">
+                <h4 className="text-base font-medium">Theme</h4>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="theme-light"
+                    value="light"
+                    {...register("theme")}
+                  />
+                  <Label htmlFor="theme-light">Light</Label>
                 </div>
-              </TabsContent>
-              
-              <TabsContent value="appearance" className="p-6">
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-medium">Appearance Settings</h3>
-                    <p className="text-sm text-gray-500">Customize your dashboard experience</p>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <h4 className="text-base font-medium">Theme Preferences</h4>
-                    
-                    <div className="grid grid-cols-1 gap-4">
-                      <div className="flex items-center space-x-2">
-                        <input type="radio" id="theme-light" name="theme" className="h-4 w-4 text-purple-600" defaultChecked />
-                        <Label htmlFor="theme-light">Light Theme</Label>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <input type="radio" id="theme-dark" name="theme" className="h-4 w-4 text-purple-600" />
-                        <Label htmlFor="theme-dark">Dark Theme</Label>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <input type="radio" id="theme-system" name="theme" className="h-4 w-4 text-purple-600" />
-                        <Label htmlFor="theme-system">System Preference</Label>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4 pt-4 border-t">
-                    <h4 className="text-base font-medium">Dashboard Layout</h4>
-                    
-                    <div className="grid grid-cols-1 gap-4">
-                      <div className="flex items-center space-x-2">
-                        <input type="radio" id="layout-default" name="layout" className="h-4 w-4 text-purple-600" defaultChecked />
-                        <Label htmlFor="layout-default">Default Layout</Label>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <input type="radio" id="layout-compact" name="layout" className="h-4 w-4 text-purple-600" />
-                        <Label htmlFor="layout-compact">Compact Layout</Label>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <input type="radio" id="layout-expanded" name="layout" className="h-4 w-4 text-purple-600" />
-                        <Label htmlFor="layout-expanded">Expanded Layout</Label>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-end">
-                    <Button className="bg-purple-600 hover:bg-purple-700 gap-2">
-                      <Save className="h-4 w-4" />
-                      Save Changes
-                    </Button>
-                  </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    id="theme-dark"
+                    value="dark"
+                    {...register("theme")}
+                  />
+                  <Label htmlFor="theme-dark">Dark</Label>
                 </div>
-              </TabsContent>
-            </Tabs>
-          </Card>
-        </div>
-      </main>
-    </div>
-  )
-} 
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  type="submit"
+                  disabled={isUpdatingSettings}
+                  className="bg-purple-600 hover:bg-purple-700 gap-2"
+                >
+                  <Save className="h-4 w-4" />
+                  {isUpdatingSettings ? "Saving..." : "Save Appearance"}
+                </Button>
+              </div>
+            </form>
+          </TabsContent>
+        </Tabs>
+      </Card>
+    </>
+  );
+}

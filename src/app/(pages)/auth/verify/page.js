@@ -1,48 +1,52 @@
 "use client";
+
+
+import { useVerifyOtpMutation } from "@/lib/api/authApi";
 import { useForm } from "react-hook-form";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 export default function VerifyPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
     setValue,
-  } = useForm();
-  const [serverError, setServerError] = useState("");
-  const [success, setSuccess] = useState(false);
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const emailFromQuery = searchParams.get("email") || "";
+  } = useForm({
+    mode: "onBlur",
+  });
+
+  const [verifyOtp, { isLoading, isSuccess, error }] = useVerifyOtpMutation();
 
   useEffect(() => {
-    if (emailFromQuery) setValue("email", emailFromQuery);
-  }, [emailFromQuery, setValue]);
+    const emailFromQuery = searchParams.get("email");
+    if (emailFromQuery) {
+      setValue("email", emailFromQuery);
+    }
+  }, [searchParams, setValue]);
 
   async function onSubmit(data) {
-    setServerError("");
-    setSuccess(false);
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/auth/verify`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        }
-      );
-      const result = await res.json();
-      if (!res.ok) {
-        setServerError(result.error || "Verification failed.");
-        return;
-      }
-      setSuccess(true);
-      setTimeout(() => router.push("/auth/login"), 2000);
+      await verifyOtp(data).unwrap();
     } catch (err) {
-      setServerError("Network error. Please try again.");
+      console.error("Failed to verify OTP:", err);
     }
   }
+
+  useEffect(() => {
+    if (isSuccess) {
+      setTimeout(() => {
+        router.push("/auth/login?verified=true");
+      }, 2000);
+    }
+  }, [isSuccess, router]);
+
+  const errorMessage =
+    error?.data?.message || "Verification failed. Please try again.";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -57,25 +61,10 @@ export default function VerifyPage() {
             </label>
             <input
               type="email"
-              {...register("email", {
-                required: "Email is required",
-                pattern: {
-                  value: /^\S+@\S+\.\S+$/,
-                  message: "Invalid email address",
-                },
-              })}
-              defaultValue={emailFromQuery}
-              className={`mt-1 w-full rounded border px-3 py-2 ${
-                errors.email ? "border-red-500" : "border-gray-300"
-              }`}
-              autoComplete="email"
-              readOnly={!!emailFromQuery}
+              {...register("email")}
+              className="mt-1 w-full rounded border bg-gray-100 px-3 py-2 text-black"
+              readOnly
             />
-            {errors.email && (
-              <span className="text-xs text-red-600">
-                {errors.email.message}
-              </span>
-            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -83,48 +72,46 @@ export default function VerifyPage() {
             </label>
             <input
               type="text"
-              {...register("otp", {
-                required: "OTP is required",
-                pattern: {
-                  value: /^[0-9]{4,8}$/,
-                  message: "Invalid OTP format",
-                },
-              })}
-              className={`mt-1 w-full rounded border px-3 py-2 ${
+              {...register("otp", { required: "OTP is required" })}
+              className={`mt-1 w-full rounded border px-3 py-2 text-black${
                 errors.otp ? "border-red-500" : "border-gray-300"
               }`}
               autoComplete="one-time-code"
               inputMode="numeric"
+              disabled={isLoading || isSuccess}
             />
             {errors.otp && (
-              <span className="text-xs text-red-600">
-                {errors.otp.message}
-              </span>
+              <span className="text-xs text-red-600">{errors.otp.message}</span>
             )}
           </div>
-          {serverError && (
+
+          {error && (
             <div className="rounded bg-red-100 px-3 py-2 text-sm text-red-700">
-              {serverError}
+              {errorMessage}
             </div>
           )}
-          {success && (
+          {isSuccess && (
             <div className="rounded bg-green-100 px-3 py-2 text-sm text-green-700">
               Verification successful! Redirecting to login...
             </div>
           )}
+
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isLoading || isSuccess}
             className="w-full rounded bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {isSubmitting ? "Verifying..." : "Verify"}
+            {isLoading ? "Verifying..." : "Verify"}
           </button>
         </form>
         <div className="mt-4 text-center text-sm text-gray-600">
           Didn't receive the code?{" "}
-          <a href="/auth/request-password-reset" className="text-blue-600 hover:underline">
-            Request new OTP
-          </a>
+          <Link
+            href="/auth/request-password-reset"
+            className="text-blue-600 hover:underline"
+          >
+            Request new one
+          </Link>
         </div>
       </div>
     </div>
