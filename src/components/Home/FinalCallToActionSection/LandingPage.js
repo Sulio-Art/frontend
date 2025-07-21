@@ -1,11 +1,24 @@
+"use client";
+
+// Step 1: Import the necessary hook and component
+import { useSelector } from "react-redux";
+import Link from "next/link";
+
 import React from "react";
 import { Mail, Facebook, Instagram } from "lucide-react";
 import Image from "next/image";
-import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 export default function LandingPage() {
+  // Step 2: Read the authentication token from the Redux store
+  const { token } = useSelector((state) => state.auth);
+  const isLoggedIn = !!token;
+
+  // Step 3: Determine the correct link for the call-to-action button
+  const ctaLink = isLoggedIn ? '/dashboard' : '/auth/register';
+
   return (
     <div className="min-h-screen bg-white relative overflow-hidden flex flex-col items-center">
       {/* Top Image */}
@@ -45,9 +58,14 @@ export default function LandingPage() {
               more time to create. Seamlessly integrate AI into your workflow and
               experience the freedom to focus on what matters most: your art.
             </p>
-            <Button className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-8 py-3 rounded-full mb-4">
-              Try for Free
-            </Button>
+            
+            {/* Step 4: Wrap the Button with the dynamic Link */}
+            <Link href={ctaLink}>
+              <Button className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold px-8 py-3 rounded-full mb-4">
+                {isLoggedIn ? 'Go to Dashboard' : 'Try for Free'}
+              </Button>
+            </Link>
+
             <p className="text-sm text-gray-400">
               Start your free 30-day trial today!
             </p>

@@ -1,43 +1,45 @@
 "use client";
+
+import { useRequestPasswordResetMutation } from "@/lib/api/authApi";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function RequestPasswordResetPage() {
+  const router = useRouter();
+
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm();
-  const [serverError, setServerError] = useState("");
-  const [success, setSuccess] = useState(false);
-  const router = useRouter();
+    formState: { errors },
+    getValues,
+  } = useForm({
+    mode: "onBlur",
+  });
+
+  const [requestPasswordReset, { isLoading, isSuccess, error }] =
+    useRequestPasswordResetMutation();
 
   async function onSubmit(data) {
-    setServerError("");
-    setSuccess(false);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || ""}/api/auth/request-password-reset`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        }
-      );
-      const result = await res.json();
-      if (!res.ok) {
-        setServerError(result.error || result.message || "Request failed.");
-        return;
-      }
-      setSuccess(true);
-      setTimeout(() => {
-        router.push(`/auth/reset-password?email=${encodeURIComponent(data.email)}`);
-      }, 1500);
+      await requestPasswordReset(data).unwrap();
     } catch (err) {
-      setServerError("Network error. Please try again.");
+      console.error("Failed to request password reset:", err);
     }
   }
+
+  useEffect(() => {
+    if (isSuccess) {
+      const email = getValues("email");
+      setTimeout(() => {
+        router.push(`/auth/reset-password?email=${encodeURIComponent(email)}`);
+      }, 2000);
+    }
+  }, [isSuccess, router, getValues]);
+
+  const errorMessage =
+    error?.data?.message || "Network error. Please try again.";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -63,6 +65,7 @@ export default function RequestPasswordResetPage() {
                 errors.email ? "border-red-500" : "border-gray-300"
               }`}
               autoComplete="email"
+              disabled={isLoading || isSuccess}
             />
             {errors.email && (
               <span className="text-xs text-red-600">
@@ -70,28 +73,30 @@ export default function RequestPasswordResetPage() {
               </span>
             )}
           </div>
-          {serverError && (
+
+          {error && (
             <div className="rounded bg-red-100 px-3 py-2 text-sm text-red-700">
-              {serverError}
+              {errorMessage}
             </div>
           )}
-          {success && (
+
+          {isSuccess && (
             <div className="rounded bg-green-100 px-3 py-2 text-sm text-green-700">
               OTP sent to your email. Redirecting...
             </div>
           )}
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isLoading || isSuccess}
             className="w-full rounded bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            {isSubmitting ? "Requesting..." : "Request Reset"}
+            {isLoading ? "Requesting..." : "Request Reset"}
           </button>
         </form>
         <div className="mt-4 text-center text-sm text-gray-600">
-          <a href="/auth/login" className="text-blue-600 hover:underline">
+          <Link href="/auth/login" className="text-blue-600 hover:underline">
             Back to Login
-          </a>
+          </Link>
         </div>
       </div>
     </div>
