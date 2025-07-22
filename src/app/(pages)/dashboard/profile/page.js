@@ -329,7 +329,7 @@ export default function ProfilePage() {
                 {userPortfolio.length === 0 && (
                   <div className="text-center py-12">
                     <p className="text-gray-500">
-                      You haven't added any artworks yet.
+                      You haven&apos;t added any artworks yet.
                     </p>
                   </div>
                 )}

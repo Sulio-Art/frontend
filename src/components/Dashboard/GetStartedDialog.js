@@ -15,6 +15,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Upload, MessageSquare, CheckCircle2 } from "lucide-react";
+import { useMemo } from "react";
 
 export function GetStartedDialog() {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,26 +28,29 @@ export function GetStartedDialog() {
   );
   const hasSetupChatbot = false;
 
-  const steps = [
-    {
-      id: "artwork",
-      title: "Upload your first artwork",
-      isCompleted: hasUploadedArtwork,
-      href: "/dashboard/artwork/add",
-      icon: Upload,
-      color: "text-blue-600",
-      bgColor: "bg-blue-100",
-    },
-    {
-      id: "chatbot",
-      title: "Setup your chatbot",
-      isCompleted: hasSetupChatbot,
-      href: "/dashboard/chatbot",
-      icon: MessageSquare,
-      color: "text-purple-600",
-      bgColor: "bg-purple-100",
-    },
-  ];
+  const steps = useMemo(
+    () => [
+      {
+        id: "artwork",
+        title: "Upload your first artwork",
+        isCompleted: hasUploadedArtwork,
+        href: "/dashboard/artwork/add",
+        icon: Upload,
+        color: "text-blue-600",
+        bgColor: "bg-blue-100",
+      },
+      {
+        id: "chatbot",
+        title: "Setup your chatbot",
+        isCompleted: hasSetupChatbot,
+        href: "/dashboard/chatbot",
+        icon: MessageSquare,
+        color: "text-purple-600",
+        bgColor: "bg-purple-100",
+      },
+    ],
+    [hasUploadedArtwork, hasSetupChatbot]
+  );
 
   useEffect(() => {
     if (typeof window === "undefined" || isLoadingArtworks) return;
@@ -80,7 +84,7 @@ export function GetStartedDialog() {
 
         <div className="p-6 pb-4">
           <h2 className="text-2xl font-semibold text-gray-900">
-            Welcome! Let's get you started.
+            Welcome! Let&apos;s get you started.
           </h2>
           <p className="text-sm text-gray-500 mt-1">
             Complete these steps to unlock the full potential of your dashboard.

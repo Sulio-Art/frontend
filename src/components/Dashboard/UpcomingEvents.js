@@ -6,9 +6,10 @@ import { useSelector } from "react-redux";
 import { format, isFuture } from "date-fns";
 
 // UI Components
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, Button } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CalendarClock, Clock, Edit } from "lucide-react";
+import Link from "next/link";
 
 const eventTypeColors = {
   Exhibition: "bg-purple-100 text-purple-600",

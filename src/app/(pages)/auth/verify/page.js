@@ -105,7 +105,7 @@ export default function VerifyPage() {
           </button>
         </form>
         <div className="mt-4 text-center text-sm text-gray-600">
-          Didn't receive the code?{" "}
+          Didn&apos;t receive the code?{" "}
           <Link
             href="/auth/request-password-reset"
             className="text-blue-600 hover:underline"

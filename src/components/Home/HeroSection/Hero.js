@@ -114,7 +114,7 @@ export default function Hero() {
             {isLoggedIn ? (
               <CardContent className="space-y-4 text-center p-8">
                 <h3 className="text-2xl font-bold">
-                  You're all set, {user?.firstName}!
+                  You&asop;re all set, {user?.firstName}!
                 </h3>
                 <p>Ready to continue creating?</p>
                 <Link href="/dashboard">
