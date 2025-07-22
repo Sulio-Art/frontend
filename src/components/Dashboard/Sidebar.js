@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import LogoutButton from "../LogoutBtn";
 
 const allSidebarItems = [
   {
@@ -169,7 +170,8 @@ export function Sidebar() {
             );
           })}
           <Separator className="my-2" />
-          <Button
+          <LogoutButton/>
+          {/* <Button
             variant="ghost"
             onClick={handleLogout}
             disabled={isLoading} // This will now work correctly
@@ -179,7 +181,8 @@ export function Sidebar() {
             <span className="text-sm">
               {isLoading ? "Logging out..." : "Log Out"}
             </span>
-          </Button>
+          </Button> */}
+          
         </div>
       </div>
     </>

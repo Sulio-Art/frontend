@@ -9,10 +9,12 @@ import { useRegisterUserMutation } from "@/lib/api/authApi";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-
+import { FaInstagram } from "react-icons/fa";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { signIn } from "next-auth/react";
 
 // Step 2: Define a validation schema for the hero form
 const heroFormSchema = z.object({
@@ -61,6 +63,12 @@ export default function Hero() {
     }
   };
 
+  const [isConnecting, setIsConnecting] = useState(false);
+  const handleConnect = () => {
+    setIsConnecting(true);
+    // This will trigger the NextAuth.js flow to link the account
+    signIn("instagram");
+  };
   const serverErrorMessage =
     error?.data?.message || "An unexpected error occurred.";
 
@@ -184,11 +192,28 @@ export default function Hero() {
                   </div>
                   <Button
                     type="submit"
-                    className="w-full bg-[#ff8c43] hover:bg-[#ff8c43]/90 text-white rounded-3xl py-6 h-auto text-sm md:text-md font-semibold"
+                    className="w-full bg-[#ff8c43] hover:bg-[#ff8c43]/90 text-white rounded-3xl py-4 h-auto text-sm md:text-lg lg:text-xl font-semibold"
                     disabled={isLoading}
                   >
                     {isLoading ? "CREATING ACCOUNT..." : "TRY FOR FREE"}
                   </Button>
+                  <div className="flex flex-nowrap items-center w-full">
+                    <hr className="w-full" />
+                    <span className="p-1">Or</span>
+                    <hr className="w-full" />
+                  </div>
+                  <Link
+                    href={
+                      "https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=1300131131492030&redirect_uri=https://huggingface.co/spaces/ayushsinghal1510/kapil-msf-open-backend&response_type=code&scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights"
+                    }
+                    type="submit"
+                    className="w-full hover:scale-105 transition-all duration-300 ease-in-out bg-gradient-to-r flex gap-4 items-center justify-center from-[#833ab4] via-[#fd1d1d] to-[#fcb045] text-white rounded-3xl py-4 h-auto text-sm md:text-lg lg:text-xl font-semibold"
+                    disabled={isLoading}
+                  >
+                    {" "}
+                    <FaInstagram className="" size="30" />
+                    {isLoading ? "CREATING ACCOUNT..." : "Login with Instagram"}
+                  </Link>
                 </CardContent>
               </form>
             )}

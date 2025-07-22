@@ -115,7 +115,7 @@ export default function Navbar() {
         <div className="hidden md:block">
           <Link
             href="/auth/login"
-            className="px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-700"
+            className="px-4 py-2 rounded-md text-sm font-medium bg-[#ff8c43] hover:bg-[#ff8c43]/90"
           >
             Login
           </Link>

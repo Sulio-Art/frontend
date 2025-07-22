@@ -2,6 +2,7 @@ import { sora } from "./fonts";
 import "./globals.css";
 import { Providers } from "./provider";
 import { CurrentUser } from "@/components/CurrentUser";
+import AuthProvider from "./authProvider";
 
 export const metadata = {
   title: "Sulio Art",
@@ -14,8 +15,10 @@ export default function RootLayout({ children }) {
     <html lang="en" suppressHydrationWarning>
       <body className={`${sora.variable} font-sans bg-black text-white`}>
         <Providers>
-          <CurrentUser />
-          {children}
+          <AuthProvider>
+            <CurrentUser />
+            {children}
+          </AuthProvider>
         </Providers>
       </body>
     </html>
