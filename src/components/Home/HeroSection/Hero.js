@@ -15,6 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
+import ConnectInstagramButton from "@/components/ConnectInstagramButton";
 
 // Step 2: Define a validation schema for the hero form
 const heroFormSchema = z.object({
@@ -218,6 +219,7 @@ export default function Hero() {
               </form>
             )}
           </Card>
+          <ConnectInstagramButton />
           <p className="leading-tight text-lg px-10 text-center">
             Start today and see upto 40% time-saving on client interations in
             the first month!
