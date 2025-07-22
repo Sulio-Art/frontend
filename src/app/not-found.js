@@ -22,7 +22,7 @@ export default function NotFound() {
           404 - Page Not Found
         </h1>
         <p className="text-gray-600 mb-8">
-          Sorry, we couldn't find the page you were looking for. It might have
+          Sorry, we couldn`&apos;`t find the page you were looking for. It might have
           been moved or deleted.
         </p>
       

@@ -181,8 +181,8 @@ export default function DashboardPage() {
         <h2 className="text-xl font-semibold mb-4">Instagram Profile</h2>
         {error && (
           <p className="text-red-500">
-            Error: {error}. This is expected if you chose to `&quot` Skip for
-            now `&quot`.
+            Error: {error}. This is expected if you chose to &apos; Skip for
+            now &apos;.
           </p>
         )}
         {profile ? (
