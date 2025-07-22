@@ -33,9 +33,10 @@ export function DashboardStats() {
     });
 
   // Since the response from getCustomers is now the full user object array, access it directly
-  const customers = customersResponse || [];
+  // Move customers initialization inside useMemo to avoid dependency issues
 
   const statCards = useMemo(() => {
+    const customers = customersResponse || [];
     // ... (rest of the useMemo hook is the same)
     const totalArtworks = {
       title: "Total Artworks",
@@ -74,7 +75,7 @@ export function DashboardStats() {
       iconColor: "text-orange-600",
     };
     return [totalArtworks, totalSales, newCustomers, commission];
-  }, [artworks, customers]);
+  }, [artworks, customersResponse]);
 
   const isLoading = isLoadingArtworks || (isLoadingCustomers && !token);
 
