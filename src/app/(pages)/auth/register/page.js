@@ -282,7 +282,7 @@ export default function RegisterPage() {
   const onOtpSubmit = async (data) => {
     setIsVerifying(true);
     try {
-        const response = await fetch(`${BACKEND_API_URL}/verify-otp`, {
+        const response = await fetch(`${BACKEND_API_URL}/auth/verify-otp`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: registeredEmail, otp: data.otp }),
