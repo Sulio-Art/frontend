@@ -1,20 +1,25 @@
+
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import InstagramProvider from "next-auth/providers/instagram";
-import { MongoDBAdapter } from "@auth/mongodb-adapter";
-import clientPromise from "@/lib/mongodb";
 
-// The URL of your running backend API from the .env file
+// Ensure this URL points to your deployed backend or your local one for testing.
+// It should be defined in your .env.local file.
 const BACKEND_API_URL = process.env.BACKEND_API_URL;
 
+if (!BACKEND_API_URL) {
+  throw new Error('Missing environment variable: "BACKEND_API_URL"');
+}
+
 export const authOptions = {
-  // The adapter is still used by NextAuth to manage sessions and link OAuth accounts.
-  adapter: MongoDBAdapter(clientPromise),
+  // NOTE: The MongoDB adapter has been completely removed.
+  // NextAuth will use JWT for session management by default.
 
   providers: [
     InstagramProvider({
       clientId: process.env.INSTAGRAM_CLIENT_ID,
       clientSecret: process.env.INSTAGRAM_CLIENT_SECRET,
+      // The logic for Instagram sign-in will be handled in the callbacks.
     }),
 
     CredentialsProvider({
@@ -24,7 +29,7 @@ export const authOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        // This function now calls YOUR backend API's login endpoint
+        // This is the correct pattern: calling your backend API.
         try {
           const res = await fetch(`${BACKEND_API_URL}/api/auth/login`, {
             method: "POST",
@@ -35,101 +40,75 @@ export const authOptions = {
             }),
           });
 
-          const user = await res.json();
+          const responseData = await res.json();
 
-          // If your backend returns an error (res not ok) or no user data
-          if (!res.ok || !user) {
-            // The error message from your backend will be shown on the login form
-            throw new Error(
-              user.message ||
-                "Invalid credentials. Please check your email and password."
-            );
+          // Check if the request was successful and if user data is present.
+          if (!res.ok || !responseData.user) {
+            throw new Error(responseData.message || "Invalid credentials.");
           }
 
-          // If login on the backend is successful, return the user object.
-          // The object MUST contain these fields for NextAuth to work correctly.
-          return {
-            id: user._id, // User ID from your backend's database
-            email: user.email,
-            name: `${user.firstName} ${user.lastName}`,
-            role: user.role, // The role from your backend
-          };
+          // Return the user object from your backend.
+          // Your backend's login response MUST include a 'user' object.
+          // e.g., { token: "...", user: { id: "...", email: "...", name: "..." } }
+          return responseData.user;
+
         } catch (e) {
-          // Any error during the fetch or from the backend will be caught
-          // and its message will be passed to the frontend.
+          // Pass any error message to the frontend login form.
           throw new Error(e.message);
         }
       },
     }),
   ],
 
-  session: { strategy: "jwt" },
+  session: {
+    // We are explicitly using JWTs. This is the correct strategy.
+    strategy: "jwt"
+  },
+
   secret: process.env.NEXTAUTH_SECRET,
 
   callbacks: {
-    // This callback runs when a JWT is created. It adds the role and ID to the token.
-    async jwt({ token, user }) {
+    // This callback populates the JWT with data from the user object.
+    async jwt({ token, user, account }) {
+      // On initial sign-in, the 'user' object from the 'authorize' function is available.
       if (user) {
         token.id = user.id;
-        token.role = user.role;
+        token.name = user.name;
+        token.email = user.email;
+        // You can add other fields like role here if your backend provides them
+        // token.role = user.role;
       }
+      
+      // If a user signs in with Instagram, the 'account' object is available.
+      if (account && account.provider === 'instagram') {
+        // Here, you would call your backend to create a user or link the account.
+        // For example:
+        // await fetch(`${BACKEND_API_URL}/api/auth/oauth/instagram`, {
+        //   method: 'POST',
+        //   headers: { 'Authorization': `Bearer ${account.access_token}` }
+        // });
+      }
+
       return token;
     },
-    // This callback runs when a session is accessed. It adds data to the session object.
+    // This callback makes data from the JWT available to the client-side session object.
     async session({ session, token }) {
       session.user.id = token.id;
-      session.user.role = token.role;
-
-      // Now, we must ask the BACKEND if the user has Instagram connected.
-      try {
-        // NOTE: You must create this endpoint on your backend!
-        const res = await fetch(
-          `${BACKEND_API_URL}/api/profile/status/${token.id}`
-        );
-        if (res.ok) {
-          const statusData = await res.json();
-          session.user.isInstagramConnected =
-            statusData.isInstagramConnected || false;
-        } else {
-          session.user.isInstagramConnected = false;
-        }
-      } catch (e) {
-        console.error("Could not fetch user status from backend:", e);
-        session.user.isInstagramConnected = false;
-      }
-
+      session.user.name = token.name;
+      session.user.email = token.email;
+      // session.user.role = token.role;
       return session;
-    },
-  },
-
-  // This `events` block is crucial for telling the backend when an account is linked.
-  events: {
-    async linkAccount({ user, account }) {
-      // This event fires when a user connects a new OAuth account (like Instagram)
-      // while already logged in. We send this info to the backend.
-      try {
-        await fetch(`${BACKEND_API_URL}/api/auth/link-account`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: user.id, // The user's ID in your DB
-            provider: account.provider, // e.g., 'instagram'
-            providerAccountId: account.providerAccountId, // The user's ID on Instagram
-          }),
-        });
-        console.log("Successfully notified backend of account link.");
-      } catch (e) {
-        console.error("Failed to link account on backend:", e);
-        // You might want to throw an error here to notify the user
-      }
     },
   },
 
   pages: {
     signIn: "/auth/login",
-    error: "/auth/login", // On error, redirect to login page with an error message
+    error: "/auth/login", // Redirect to login on error, with an error message in the URL
   },
 };
 
+// Create the handler function using your authOptions
 const handler = NextAuth(authOptions);
+
+// Export the handler for both GET and POST requests, as required by the App Router
 export { handler as GET, handler as POST };
