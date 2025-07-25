@@ -1,7 +1,7 @@
 import { sora } from "./fonts";
 import "./globals.css";
 import { Providers } from "./provider";
-import { CurrentUser } from "@/components/CurrentUser";
+
 import AuthProvider from "./authProvider";
 
 export const metadata = {
@@ -16,7 +16,7 @@ export default function RootLayout({ children }) {
       <body className={`${sora.variable} font-sans bg-black text-white`}>
         <Providers>
           <AuthProvider>
-            <CurrentUser />
+            
             {children}
           </AuthProvider>
         </Providers>

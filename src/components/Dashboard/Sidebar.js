@@ -1,13 +1,15 @@
-// src/components/Dashboard/Sidebar.js
-
+//
+// FILE: src/components/Dashboard/Sidebar.js
+// ACTION: REPLACE with this full code.
+//
 "use client";
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation"; // useRouter is removed
+import { usePathname } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { useLogoutUserMutation } from "@/lib/api/authApi";
-import { logout } from "@/lib/slices/authSlice";
+import { clearUser } from "@/lib/slices/authSlice";
 import { Toaster, toast } from "react-hot-toast";
 
 import { cn } from "@/lib/utils";
@@ -28,6 +30,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import LogoutButton from "../LogoutBtn";
+
 
 const allSidebarItems = [
   {
@@ -72,14 +75,14 @@ const bottomItems = [
   { title: "Profile", icon: User, href: "/dashboard/profile" },
 ];
 
-export function Sidebar() {
+
+export default function Sidebar() {
   const pathname = usePathname();
   const dispatch = useDispatch();
 
   const { user } = useSelector((state) => state.auth);
   const isAdmin = user?.role === "admin";
 
-  // FIX: Ensure 'isLoading' is destructured from the mutation hook
   const [logoutUser, { isLoading }] = useLogoutUserMutation();
 
   const handleLogout = async () => {
@@ -92,18 +95,12 @@ export function Sidebar() {
     });
 
     try {
-      // Wait for backend to confirm logout and delete cookie
       await logoutPromise;
-
-      // Clear the user state in Redux
-      dispatch(logout());
-
-      // FIX: Force a full page reload to the login page to avoid middleware race conditions
+      dispatch(clearUser()); 
       window.location.assign("/auth/login");
     } catch (err) {
       console.error("Logout failed:", err);
-      // As a fallback, still clear Redux and force redirect
-      dispatch(logout());
+      dispatch(clearUser());
       window.location.assign("/auth/login");
     }
   };
@@ -111,7 +108,7 @@ export function Sidebar() {
   return (
     <>
       <Toaster position="top-center" />
-      <div className="hidden lg:flex h-screen w-64 flex-col border-r bg-white">
+      <div className="hidden lg:flex h-screen w-64 flex-col border-r bg-white text-gray-800">
         <div className="flex items-center gap-2 p-6">
           <Link href="/dashboard" className="flex items-center gap-2">
             <Image src="/images/logo.png" alt="Logo" width={32} height={32} />
@@ -170,19 +167,7 @@ export function Sidebar() {
             );
           })}
           <Separator className="my-2" />
-          <LogoutButton/>
-          {/* <Button
-            variant="ghost"
-            onClick={handleLogout}
-            disabled={isLoading} // This will now work correctly
-            className="w-full justify-start gap-3 rounded-lg px-3 py-2 text-red-600 hover:bg-red-50 hover:text-red-700"
-          >
-            <LogOut className="h-5 w-5" />
-            <span className="text-sm">
-              {isLoading ? "Logging out..." : "Log Out"}
-            </span>
-          </Button> */}
-          
+          <LogoutButton />
         </div>
       </div>
     </>

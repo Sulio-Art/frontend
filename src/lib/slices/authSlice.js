@@ -1,48 +1,45 @@
+
+
 import { createSlice } from "@reduxjs/toolkit";
 
-const loadToken = () => {
-  try {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("token") || null;
-    }
-  } catch (e) {
-    console.error("Could not load token from localStorage", e);
-  }
-  return null;
-};
-
 const initialState = {
-  token: loadToken(),
+  
   user: null,
+  token: null,
+ 
+  hasChecked: false,
 };
 
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    setCredentials: (state, action) => {
+    
+    setUser: (state, action) => {
       const { user, token } = action.payload;
       state.user = user;
-      if (token) {
-        state.token = token;
+      state.token = token;
+      
+      state.hasChecked = true;
 
-        if (typeof window !== "undefined") {
-          localStorage.setItem("token", token);
-        }
+      if (token && typeof window !== "undefined") {
+        
+        localStorage.setItem("app_token", token);
       }
     },
-    logout: (state) => {
-      state.token = null;
+    
+    clearUser: (state) => {
       state.user = null;
+      state.token = null;
+      state.hasChecked = true;
 
       if (typeof window !== "undefined") {
-        localStorage.removeItem("token");
+        
+        localStorage.removeItem("app_token");
       }
     },
   },
 });
 
-export const { setCredentials, logout } = authSlice.actions;
+export const { setUser, clearUser } = authSlice.actions;
 export default authSlice.reducer;
-export const selectCurrentUser = (state) => state.auth.user;
-export const selectCurrentToken = (state) => state.auth.token;

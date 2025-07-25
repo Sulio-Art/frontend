@@ -17,7 +17,7 @@ export default function LandingPage() {
   const isLoggedIn = !!token;
 
   // Step 3: Determine the correct link for the call-to-action button
-  const ctaLink = isLoggedIn ? '/dashboard' : '/auth/register';
+  const ctaLink = isLoggedIn ? '/dashboard' : 'api/auth/register';
 
   return (
     <div className="min-h-screen bg-white relative overflow-hidden flex flex-col items-center">
